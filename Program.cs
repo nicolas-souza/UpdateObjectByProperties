@@ -1,31 +1,54 @@
 ﻿using System.Reflection;
 using UpdateObjectByProperties;
 
-var oldObj = new ObjectTest(){ID = 10, MyProperty = "Teste 01"};
-var newObj = new ObjectTest(){ID = 10, MyProperty = "Teste 02"};
+var oldObj = new ObjectTest(){ID = 10, MyProperty = "MyProperty 01", objectSon = new() {OtherPropertySon = "Other Property 01", MyPropertySon = "My Property Son 01" }};
+var newObj = new ObjectTest(){ID = 10, MyProperty = "MyProperty 02", objectSon = new() {OtherPropertySon = "Other Property 02", MyPropertySon = "" }};
 
-System.Console.WriteLine("Old value: " + oldObj.MyProperty);
+System.Console.WriteLine(oldObj.MyProperty);
+System.Console.WriteLine(oldObj.objectSon.MyPropertySon);
+System.Console.WriteLine(oldObj.objectSon.OtherPropertySon);
 
 UpdateObject(oldObj, newObj);
 
-System.Console.WriteLine("New value: " + oldObj.MyProperty);
+System.Console.WriteLine("-------------------------------------");
 
-void UpdateObject<ObjectTest>(ObjectTest oldOs, ObjectTest os)
+System.Console.WriteLine(oldObj.MyProperty);
+System.Console.WriteLine(oldObj.objectSon.MyPropertySon);
+System.Console.WriteLine(oldObj.objectSon.OtherPropertySon);
+
+void UpdateObject<T>(T oldObject, T newObject)
 {
-    PropertyInfo[] property = typeof(ObjectTest).GetProperties();
+    PropertyInfo[] properties = typeof(T).GetProperties();
 
-    foreach (PropertyInfo propriedade in property)
+    foreach (PropertyInfo property in properties)
     {
-        var oldValue = propriedade.GetValue(oldOs);
-        var newValue = propriedade.GetValue(os);
+        var oldValue = property.GetValue(oldObject);
+        var newValue = property.GetValue(newObject);
 
-        if (oldValue != null && !oldValue.Equals(newValue))
+        var teste = property.PropertyType;
+
+        if (property.PropertyType == typeof(string))
         {
-            propriedade.SetValue(oldOs, newValue);
+            if (!string.IsNullOrEmpty((string)newValue))
+            {
+                property.SetValue(oldObject, newValue);
+            }
         }
-        else if (oldValue == null && newValue != null)
+        else if (property.PropertyType.IsClass && !property.PropertyType.IsPrimitive && property.PropertyType != typeof(string))
         {
-            propriedade.SetValue(oldOs, newValue);
+            if (oldValue != null && newValue != null)
+            {
+                if (property.PropertyType == typeof(ObjectSon))
+                    UpdateObject((ObjectSon)oldValue, (ObjectSon)newValue);
+            }
+            else if (oldValue == null && newValue != null)
+            {
+                property.SetValue(oldObject, newValue);
+            }
+        }
+        else if (!Equals(oldValue, newValue))
+        {
+            property.SetValue(oldObject, newValue);
         }
     }
 }
